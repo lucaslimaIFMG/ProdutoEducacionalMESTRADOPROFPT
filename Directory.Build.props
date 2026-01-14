@@ -1,0 +1,7 @@
+<Project>
+    <PropertyGroup>
+        <Version>1.1.7</Version>
+        <AssemblyVersion>$(Version).0</AssemblyVersion>
+        <NoWarn>$(NoWarn);CA1041;CA1401;0618;1591;1998;2002;8767</NoWarn>
+    </PropertyGroup>
+</Project>

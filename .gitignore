@@ -1,0 +1,14 @@
+.vs/
+.vscode/*
+bin/
+obj/
+
+!.vscode/launch.json
+!.vscode/settings.json
+!.vscode/tasks.json
+.DS_Store
+.env
+*.filters
+*.log
+*.user
+desktop.ini
