@@ -104,8 +104,10 @@ services:
 11. Build e Deploy
 Comandos para execução:
 
+```bash
 docker compose build
 docker compose up -d
+```
 
 12. Verificação dos Serviços
 Após a inicialização: cole os link no navegador 
