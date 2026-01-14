@@ -39,7 +39,8 @@ Responsáveis pela criação e orquestração dos containers. Garantem execuçã
 O bot é implementado como uma Máquina de Estados Finitos, onde: Cada estado é representado por um ConversationNode; As transições ocorrem a partir: Da entrada do usuário; Ou de uma transição automática (Next); O estado atual do usuário é armazenado em um objeto ConversationState.
 5. Definição do Grafo no appsettings.json
 Os estados e transições são definidos na seção ConversationGraph do arquivo appsettings.json, carregada na inicialização da aplicação:
-var conversationGraph = builder.Configuration 
+```csharp
+var conversationGraph = builder.Configuration
     .GetSection("ConversationGraph")
     .Get<ConversationGraph>();
 
@@ -48,6 +49,7 @@ if (conversationGraph != null)
     builder.Services.AddSingleton(conversationGraph);
     builder.Services.AddScoped<IConversationService, ConversationService>();
 }
+````
 
 6. Gerenciamento de Estado
 O estado de cada usuário é armazenado temporariamente em memória utilizando IMemoryCache.
