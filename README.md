@@ -1,4 +1,4 @@
-# Jornada Heroica
+# TeddyBot
 
 ## Visão Geral
 
