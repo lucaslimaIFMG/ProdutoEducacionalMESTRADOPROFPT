@@ -1,34 +1,45 @@
-# TeddyBot
 
-## Visão Geral
+1. Visão Geral
 
-O projeto **Jornada Heroica** consiste em uma API desenvolvida em **ASP.NET Core** que implementa um bot conversacional baseado em uma **máquina de estados finitos**, modelada por meio de um **grafo de conversação**.  
-O bot integra-se à **WAHA API** para envio de mensagens e utiliza um **webhook** para receber eventos de mensagens dos usuários.
+O projeto TeddyBot consiste em uma API desenvolvida em ASP.NET Core que implementa um bot conversacional baseado em uma máquina de estados finitos, modelada por meio de um grafo de conversação. O bot integra-se à WAHA API para envio de mensagens e utiliza um webhook para receber eventos de mensagens dos usuários. Os estados e transições da conversa são definidos de forma declarativa no arquivo appsettings.json, permitindo alterar
+o comportamento do bot sem recompilar a aplicação.
 
-Os estados e transições da conversa são definidos de forma declarativa no arquivo **appsettings.json**, permitindo alterar o comportamento do bot sem recompilar a aplicação.
+2. Objetivos do Projeto
+Implementar um bot conversacional baseado em fundamentos teóricos de Ciência da Computação; Permitir a alteração de fluxos conversacionais via configuração; Garantir portabilidade e reprodutibilidade por meio de containers Docker; Facilitar uso acadêmico, institucional e experimental.
 
----
 
-## Arquitetura Geral
 
-A solução é composta pelos seguintes elementos principais:
+3. Arquitetura Geral
+A solução é composta pelos seguintes componentes principais:
+3.1 ASP.NET Core Web API
+Responsável por expor o endpoint de webhook eCentraliza a lógica de orquestração da aplicação.
+ 3.2 ConversationService
+Camada de serviço que processa a lógica da conversação. Interpreta as mensagens recebidas e determina as transições de estado.
 
-- **ASP.NET Core Web API**: responsável por expor o endpoint de webhook.
-- **ConversationService**: camada de serviço que processa a lógica da conversa.
-- **ConversationGraph**: estrutura que representa o grafo de estados da conversa.
-- **WAHA API**: utilizada para envio e recebimento de mensagens via WhatsApp.
-- **IMemoryCache**: responsável por manter o estado da conversa de cada usuário.
-- **appsettings.json**: arquivo responsável por definir os estados e transições da máquina de estados.
-- **Docker / Docker Compose**: responsáveis pela orquestração dos serviços.
 
----
+3.3 ConversationGraph
+Estrutura que representa o grafo de estados da conversa. Contém nós (estados) e transições possíveis.
 
-## Definição do Grafo no appsettings.json
 
-Os estados e transições da conversa são definidos no arquivo **appsettings.json** por meio da seção `ConversationGraph`, que é carregada na inicialização da aplicação:
+3.4 WAHA API (WahaWebhookMessage.cs)
+Responsável pela comunicação com o WhatsApp. Encaminha mensagens recebidas para o webhook da API. Envia respostas geradas pelo bot aos usuários.
 
-```csharp
-var conversationGraph = builder.Configuration
+
+3.5 IMemoryCache
+Utilizado para armazenar temporariamente o estado da conversa de cada usuário. Permite múltiplas sessões simultâneas sem conflito.
+
+
+3.6 appsettings.json
+Arquivo central de configuração do fluxo conversacional. Define estados, transições e mensagens.
+
+
+3.7  Docker e Docker Compose
+Responsáveis pela criação e orquestração dos containers. Garantem execução padronizada em qualquer ambiente.
+4. Modelagem da Máquina de Estados
+O bot é implementado como uma Máquina de Estados Finitos, onde: Cada estado é representado por um ConversationNode; As transições ocorrem a partir: Da entrada do usuário; Ou de uma transição automática (Next); O estado atual do usuário é armazenado em um objeto ConversationState.
+5. Definição do Grafo no appsettings.json
+Os estados e transições são definidos na seção ConversationGraph do arquivo appsettings.json, carregada na inicialização da aplicação:
+var conversationGraph = builder.Configuration 
     .GetSection("ConversationGraph")
     .Get<ConversationGraph>();
 
@@ -37,167 +48,87 @@ if (conversationGraph != null)
     builder.Services.AddSingleton(conversationGraph);
     builder.Services.AddScoped<IConversationService, ConversationService>();
 }
-````
 
-Essa abordagem permite modificar fluxos conversacionais sem necessidade de recompilação.
+6. Gerenciamento de Estado
+O estado de cada usuário é armazenado temporariamente em memória utilizando IMemoryCache.
+Vantagens Suporte a múltiplos usuários simultâneos;  Baixa latência; Simplicidade para ambientes de desenvolvimento e testes. Para ambientes de produção com alta escala, recomenda-se avaliar soluções distribuídas (Redis, por exemplo).
 
----
+7. Integração com a WAHA API
+A WAHA API é responsável por: Enviar mensagens ao usuário via WhatsApp; Encaminhar eventos de mensagens para o webhook configurado para manter sessões do WhatsApp ativas. A API Jornada Heroica atua como intermediária, processando a lógica antes de responder ao usuário.
 
-## Modelo de Máquina de Estados
+8. Webhook
+Endpoint Principal
+POST /webhook
+Esse endpoint recebe os eventos enviados pela WAHA API e os encaminha para o serviço de conversação.
 
-O bot é implementado como uma **máquina de estados finitos**, onde:
+9. Execução do Projeto
+Pré-requisitos Antes de iniciar, certifique-se de possuir:
+Docker 20 ou superior 
+Docker Compose v2 ou superior
+Acesso à internet (para download de imagens Docker)
 
-* Cada **estado** corresponde a um `ConversationNode`.
-* Cada **transição** ocorre por meio das opções informadas pelo usuário ou por uma transição automática (`Next`).
-* O **estado atual** do usuário é armazenado em um objeto `ConversationState`.
+10. Docker Compose
+O projeto utiliza o seguinte arquivo docker-compose.yml:
+Segue abaixo o código contido no arquivo Docker
 
-Formalmente:
-
-* **S**: conjunto de estados.
-* **Σ**: conjunto de entradas.
-* **δ**: função de transição.
-* **s₀**: estado inicial.
-
----
-
-## Gerenciamento de Estado
-
-O estado de cada usuário é armazenado temporariamente em memória utilizando `IMemoryCache`, permitindo múltiplas sessões simultâneas sem interferência.
-
----
-
-## Integração com a WAHA API
-
-A WAHA API é responsável por:
-
-* Enviar mensagens ao usuário.
-* Encaminhar eventos de mensagens para o webhook da aplicação.
-
-A aplicação atua como intermediária, aplicando a lógica da máquina de estados antes de responder ao usuário.
-
----
-
-## Webhook
-
-O endpoint principal é:
-
-```
-POST /Webhook
-```
-
-Esse endpoint recebe os eventos da WAHA e os encaminha ao serviço de conversação.
-
----
-
-## Execução do Projeto
-
-### Pré-requisitos
-
-Para executar o projeto, é necessário possuir:
-
-* **Docker** 20+
-* **Docker Compose** v2+
-* Acesso à internet para baixar imagens (quando necessário)
-
----
-
-### Docker Compose
-
-O projeto é executado por meio do seguinte arquivo `docker-compose.yml`:
-
-```yaml
 services:
-    chatbot:
-        restart: unless-stopped
-        build:
-            context: .
-            dockerfile: ./src/JornadaHeroica.Api/Dockerfile
-        ports:
-            - 8998:8080
-        environment:
-            WAHA_API_URL: http://waha:3000
+  chatbot:
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: ./src/JornadaHeroica.Api/Dockerfile
+    ports:
+      - 8998:8080
+    environment:
+      WAHA_API_URL: http://waha:3000
 
-    waha:
-        image: devlikeapro/waha
-        pull_policy: never
-        restart: unless-stopped
-        ports:
-            - 3627:3000
-        environment:
-            WHATSAPP_HOOK_URL: http://chatbot:8080/webhook
-            WHATSAPP_HOOK_EVENTS: message
-            WHATSAPP_HOOK_RETRIES_ATTEMPTS: 1
-        volumes:
-            - /tbf/ifmg-waha:/app/.sessions
-```
+  waha:
+    image: devlikeapro/waha
+    pull_policy: never
+    restart: unless-stopped
+    ports:
+      - 3627:3000
+    environment:
+      WHATSAPP_HOOK_URL: http://chatbot:8080/webhook
+      WHATSAPP_HOOK_EVENTS: message
+      WHATSAPP_HOOK_RETRIES_ATTEMPTS: 1
+    volumes:
+      - /tbf/ifmg-waha:/app/.sessions
 
----
+11. Build e Deploy
+Comandos para execução:
 
-### Build e Deploy
-
-Para construir e iniciar os containers, execute:
-
-```bash
 docker compose build
 docker compose up -d
-```
 
-Ou, em um único comando:
+12. Verificação dos Serviços
+Após a inicialização: cole os link no navegador 
+API Jornada Heroica:
+ http://localhost:8998
+WAHA API:
+ http://localhost:3627
 
-```bash
-docker compose up -d --build
-```
+14. Fluxo de Execução em Produção
+O usuário envia uma mensagem via WhatsApp;
 
----
 
-### Verificação
+A WAHA (WahaWebhookMessage.cs ) recebe a mensagem;
 
-Após a inicialização:
 
-* A API estará disponível em:
-  **[http://localhost:8998](http://localhost:8998)**
-* O serviço WAHA estará disponível em:
-  **[http://localhost:3627](http://localhost:3627)**
+A WAHA  (WahaWebhookMessage.cs )dispara o webhook (WebhookController.cs);
 
-Os logs podem ser acompanhados com:
 
-```bash
-docker compose logs -f
-```
+A API Jornada Heroica processa a mensagem;
 
----
 
-### Parada dos Serviços
+A resposta é enviada ao usuário pela WAHA API.
 
-Para interromper os containers:
 
-```bash
-docker compose down
-```
 
----
 
-## Fluxo de Execução em Produção
 
-1. O usuário envia uma mensagem via WhatsApp.
-2. A WAHA recebe a mensagem e dispara o webhook.
-3. A API Jornada Heroica processa a mensagem.
-4. A resposta é enviada de volta ao usuário pela WAHA API.
 
----
 
-## Benefícios da Arquitetura
 
-* Total desacoplamento entre definição de fluxo e código.
-* Execução reproduzível por meio de containers.
-* Facilidade de deploy em qualquer ambiente compatível com Docker.
-* Escalabilidade horizontal da API.
-* Clareza acadêmica na modelagem por máquina de estados.
 
----
 
-## Considerações Finais
-
-O **Jornada Heroica** apresenta uma implementação sólida de um bot conversacional baseado em grafos e máquinas de estados finitos, combinando fundamentos teóricos da ciência da computação com práticas modernas de engenharia de software, como containerização e configuração declarativa.
-
-Essa arquitetura torna o projeto adequado tanto para uso institucional quanto para fins acadêmicos, experimentais e didáticos.
