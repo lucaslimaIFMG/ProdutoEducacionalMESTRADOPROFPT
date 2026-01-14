@@ -73,29 +73,33 @@ Acesso à internet (para download de imagens Docker)
 O projeto utiliza o seguinte arquivo docker-compose.yml:
 Segue abaixo o código contido no arquivo Docker
 
+```yaml
 services:
-  chatbot:
-    restart: unless-stopped
-    build:
-      context: .
-      dockerfile: ./src/JornadaHeroica.Api/Dockerfile
-    ports:
-      - 8998:8080
-    environment:
-      WAHA_API_URL: http://waha:3000
+    chatbot:
+        restart: unless-stopped
+        build:
+            context: .
+            dockerfile: ./src/JornadaHeroica.Api/Dockerfile
+        ports:
+            - 8998:8080
+        environment:
+            WAHA_API_URL: http://waha:3000
 
-  waha:
-    image: devlikeapro/waha
-    pull_policy: never
-    restart: unless-stopped
-    ports:
-      - 3627:3000
-    environment:
-      WHATSAPP_HOOK_URL: http://chatbot:8080/webhook
-      WHATSAPP_HOOK_EVENTS: message
-      WHATSAPP_HOOK_RETRIES_ATTEMPTS: 1
-    volumes:
-      - /tbf/ifmg-waha:/app/.sessions
+    waha:
+        image: devlikeapro/waha
+        pull_policy: never
+        restart: unless-stopped
+        ports:
+            - 3627:3000
+        environment:
+            WHATSAPP_HOOK_URL: http://chatbot:8080/webhook
+            WHATSAPP_HOOK_EVENTS: message
+            WHATSAPP_HOOK_RETRIES_ATTEMPTS: 1
+        volumes:
+            - /tbf/ifmg-waha:/app/.sessions
+```
+
+---
 
 11. Build e Deploy
 Comandos para execução:
